@@ -7,7 +7,9 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -31,8 +33,11 @@ public class MainActivity extends AppCompatActivity
     private volatile boolean stopThread;
     private TextView currentLocationView;
     private Button viewDataBtn;
+    private Button shareDataBtn;
     private LocationManager locManager;
     private FileOutputStream outputStream;
+    private final String dataFileName = "dataFile.csv";
+    private File dataFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +46,13 @@ public class MainActivity extends AppCompatActivity
         captureToggleButton = (ToggleButton) findViewById(R.id.captureToggleButton);
         currentLocationView = (TextView) findViewById(R.id.currentLocationView);
         viewDataBtn = (Button) findViewById(R.id.viewDataBtn);
+        shareDataBtn = (Button) findViewById(R.id.shareDataBtn);
         locManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if(locManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
             checkPermission();
-        File file = new File(this.getFilesDir(), "testFile");
-        if(file.exists())
-            file.delete();
+        dataFile = new File(this.getFilesDir(), dataFileName);
+        if(dataFile.exists())
+            dataFile.delete();
     }
 
     @Override
@@ -66,7 +72,7 @@ public class MainActivity extends AppCompatActivity
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         if(isChecked) {
             try {
-                outputStream = openFileOutput("testFile", Context.MODE_PRIVATE);
+                outputStream = openFileOutput(dataFileName, Context.MODE_PRIVATE);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -76,6 +82,7 @@ public class MainActivity extends AppCompatActivity
             stopThread = true;
             currentLocationView.setText("");
             viewDataBtn.setVisibility(View.VISIBLE);
+            shareDataBtn.setVisibility(View.VISIBLE);
             try {
                 outputStream.close();
             } catch (IOException e) {
@@ -171,7 +178,20 @@ public class MainActivity extends AppCompatActivity
 
     public void onViewDataClick(View view) {
         Intent intent = new Intent(this, MapActivity.class);
+        intent.putExtra("dataFileName", dataFileName);
         startActivity(intent);
+    }
+
+    public void onShareDataClick(View view) {
+        Uri fileUri = FileProvider.getUriForFile(this,
+                "com.example.skear.trajectorytracker", dataFile);
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        Log.d(TAG, fileUri.getPath());
+        sendIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        sendIntent.setType("text/plain");
+        Intent shareIntent = Intent.createChooser(sendIntent, null);
+        startActivity(shareIntent);
     }
 
     @Override

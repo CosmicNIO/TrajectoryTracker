@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private PolylineOptions polylineOptions;
+    private String dataFileName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,8 +27,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        File file = new File(this.getFilesDir(), "testFile");
-        if(file.exists()) {
+        dataFileName = getIntent().getStringExtra("dataFileName");
+        File dataFile = new File(this.getFilesDir(), dataFileName);
+        if(dataFile.exists()) {
             readData();
         }
     }
@@ -42,7 +44,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void readData() {
         polylineOptions = new PolylineOptions();
         try {
-            FileInputStream fileInputStream = openFileInput("testFile");
+            FileInputStream fileInputStream = openFileInput(dataFileName);
             InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
             BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
             String readString = bufferedReader.readLine();
